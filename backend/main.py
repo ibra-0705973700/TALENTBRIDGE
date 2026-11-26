@@ -154,6 +154,9 @@ def login(b: Login):
         u = c.execute("select * from users where email=?", (b.email.lower(),)).fetchone()
     if not u or not check_pw(b.password, u["pw"]):
         raise HTTPException(401, "Email or password is incorrect.")
+    if u["email"] in ADMINS and u["role"] != "Admin":  # promote existing account listed in ADMIN_EMAILS
+        with db() as c:
+            c.execute("update users set role='Admin' where id=?", (u["id"],))
     return {"token": token_for(u["id"])}
 
 

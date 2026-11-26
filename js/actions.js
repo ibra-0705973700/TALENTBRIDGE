@@ -1,5 +1,6 @@
 // Actions that change data on the server, then reload state and redraw.
 async function run(fn,ok){try{await fn();await refresh();if(ok)toast(ok);route()}catch(e){toast(e.message,1)}}
+function togglePw(){const i=document.getElementById('ap'),b=document.getElementById('pwb'),show=i.type==='password';i.type=show?'text':'password';b.textContent=show?'Hide':'Show';b.setAttribute('aria-pressed',show)}
 async function doAuth(mode){
   const n=v('an').trim(),e=v('ae').trim(),p=v('ap');
   if(mode==='register'&&n.length<2)return toast('Enter your full name.',1);
@@ -7,7 +8,7 @@ async function doAuth(mode){
   if(mode==='register'&&p.length<8)return toast('Use a password with at least 8 characters.',1);
   if(!p)return toast('Enter your password.',1);
   try{
-    const r=await api(mode==='register'?'/api/register':'/api/login',{method:'POST',body:mode==='register'?{name:n,email:e,password:p,role:v('ar')}:{email:e,password:p}});
+    if(!DEMO_MODE)toast('Contacting the server. The first request can take up to a minute.');const r=await api(mode==='register'?'/api/register':'/api/login',{method:'POST',body:mode==='register'?{name:n,email:e,password:p,role:v('ar')}:{email:e,password:p}});
     setToken(r.token);await refresh();toast(mode==='register'?'Account created.':'Signed in.');location.hash='dashboard';route();
   }catch(err){toast(err.message,1)}
 }
@@ -37,5 +38,6 @@ function post(){
 function rm(id){run(()=>api('/api/listings/'+id,{method:'DELETE'}),'Listing removed.')}
 function contact(){if(!/^\S+@\S+\.\S+$/.test(v('ce')))return toast('Enter a valid email address.',1);if(v('cm').trim().length<5)return toast('Write a message.',1);toast('Thanks. In production this is emailed to the team.')}
 // Start: load the signed-in user's data, then show the page
-document.getElementById('app').innerHTML='<p>Loading…</p>';
+document.getElementById('app').innerHTML=DEMO_MODE?'<p>Loading…</p>':'<p>Loading… the demo server can take up to a minute to wake up on the first visit.</p>';
+if(DEMO_MODE){const f=document.querySelector('footer');if(f)f.textContent='TalentBridge prototype for the Power Learn Project Mini Hackathon. Demo mode: your data is saved in this browser only. The FastAPI backend in the repository is the production version.'}
 (async()=>{if(token())await refresh();route()})();
